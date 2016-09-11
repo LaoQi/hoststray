@@ -4,8 +4,9 @@
 
 托盘程序参考来自[http://www.open-open.com/lib/view/open1387076301702.html](http://www.open-open.com/lib/view/open1387076301702.html)
 
+
 ### version 0.2
-增加了权限提醒
+增加了权限提醒, 修改备份位置（从环境变量获取）,修复备份bug
 
 ### version 0.1
 仅支持ipv4

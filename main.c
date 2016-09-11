@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <io.h>
 #include <string.h>
 
 #define __VERSION__ 0.2
@@ -29,8 +30,15 @@
 #define APP_MUSTROOT TEXT("修改失败，尝试用管理员用户运行")
 
 #define HOSTS_MAX 255
-#define HOSTS_FILE "C:\\Windows\\System32\\drivers\\etc\\hosts"
-#define HOSTS_FILE_BACKUP "C:\\Windows\\System32\\drivers\\etc\\hosts.bak"
+
+
+//#define HOSTS_FILE "C:\\Windows\\System32\\drivers\\etc\\hosts"
+//#define HOSTS_FILE_BACKUP "D:\\hosts.bak"
+#define HOSTS_FILE_PATH "\\System32\\drivers\\etc\\hosts"
+#define HOSTS_FILE_BACKUP_PATH "\\hosts.bak"
+
+char HOSTS_FILE[255];
+char HOSTS_FILE_BACKUP[255];
 
 //只支持ipv4
 char AddrChar[13] = "0123456789.:";
@@ -154,8 +162,8 @@ int DumpHosts(HWND hWnd) {
     return fclose(fp);
 }
 
-int BackupHosts() {
-    if (access(HOSTS_FILE_BACKUP, 0)) {
+int BackupHosts(HWND hWnd) {
+    if (_access(HOSTS_FILE_BACKUP, 0) == 0) {
         LOG("alread backup \n");
         return 0;
     }
@@ -170,12 +178,16 @@ int BackupHosts() {
     }
     if ((err = fopen_s(&desfile, HOSTS_FILE_BACKUP, "w")) != 0) {
         LOG("%s read error\n", HOSTS_FILE_BACKUP);
+        MessageBox(hWnd, TEXT("备份失败，请自行备份hosts文件"), APP_TITLE, MB_OK);
         fclose(sourcefile);
         return -1;
     }
     while ((c = fgetc(sourcefile)) != EOF) {
-        fputc(fgetc(sourcefile), desfile);
+        fputc(c, desfile);
     }
+    char success[50];
+    sprintf_s(success, 50, "备份hosts成功，文件保存在 %s", HOSTS_FILE_BACKUP);
+    MessageBox(hWnd, success, APP_TITLE, MB_OK);
     fclose(sourcefile);
     fclose(desfile);
     return 0;
@@ -324,6 +336,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+int ConfigPath(HWND hWnd) {
+    char *rootpath;
+    size_t len;
+    errno_t err = _dupenv_s(&rootpath, &len, "WINDIR");
+    if (err || rootpath == NULL) {
+        LOG("WINDIR error\n");
+        MessageBox(hWnd, TEXT("系统路径获取失败"), APP_TITLE, MB_OK);
+        PostMessage(hWnd, WM_DESTROY, NULL, NULL);
+        return -1;
+    }
+    sprintf_s(HOSTS_FILE, 255, "%s%s", rootpath, HOSTS_FILE_PATH);
+    LOG(HOSTS_FILE);
+    free(rootpath);
+    char *userpath;
+    err = _dupenv_s(&userpath, &len, "UserProfile"); 
+    if (err || userpath == NULL) {
+        LOG("UserProfile error\n");
+        MessageBox(hWnd, TEXT("备份路径获取失败"), APP_TITLE, MB_OK);
+        //PostMessage(hWnd, WM_DESTROY, NULL, NULL);
+        return -1;
+    }
+    sprintf_s(HOSTS_FILE_BACKUP, 255, "%s%s", userpath, HOSTS_FILE_BACKUP_PATH);
+    free(userpath);
+    return 0;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int iCmdShow) {
     HWND hWnd;
@@ -348,7 +386,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ShowWindow(hWnd, iCmdShow);
     UpdateWindow(hWnd);
 
-    BackupHosts();
+    ConfigPath(hWnd);
+    BackupHosts(hWnd);
     LoadHosts();
     InitTray(hInstance, hWnd); 
 
