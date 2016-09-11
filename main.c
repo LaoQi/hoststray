@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define __VERSION__ 0.1
+#define __VERSION__ 0.2
 
 #define LOG(fmt, ...) do{char _buffer[16380];sprintf_s(_buffer,16380, fmt, __VA_ARGS__);OutputDebugString(_buffer);}while(0);
 
@@ -23,8 +23,10 @@
 #define WM_TRAY (WM_USER + 100)  
 #define WM_TASKBAR_CREATED RegisterWindowMessage(TEXT("Hoststray"))  
 
-#define APP_TITLE    TEXT("hoststray v0.1")  
+#define APP_TITLE    TEXT("hoststray v0.2")  
 #define APP_TIP     TEXT("这是一个简单修改系统hosts的小程序\r\n项目地址：https://github.com/LaoQi/hoststray.git")
+
+#define APP_MUSTROOT TEXT("修改失败，尝试用管理员用户运行")
 
 #define HOSTS_MAX 255
 #define HOSTS_FILE "C:\\Windows\\System32\\drivers\\etc\\hosts"
@@ -134,11 +136,12 @@ int LoadHosts() {
     return fclose(fp);
 }
 
-int DumpHosts() {
+int DumpHosts(HWND hWnd) {
     FILE * fp;
     errno_t err;
     if ((err = fopen_s(&fp, HOSTS_FILE, "w")) != 0) {
         LOG("error!");
+        MessageBox(hWnd, APP_MUSTROOT, APP_TITLE, MB_OK);
         return -1;
     }
     for (size_t i = 0; i < hosts_top; i++) {
@@ -267,7 +270,7 @@ void DispatchMenu(HWND hWnd, int cmd) {
         return;
     }
     Hosts[cur].is_checked = !Hosts[cur].is_checked;
-    DumpHosts();
+    DumpHosts(hWnd);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
