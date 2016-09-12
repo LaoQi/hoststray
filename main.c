@@ -185,11 +185,11 @@ int BackupHosts(HWND hWnd) {
     while ((c = fgetc(sourcefile)) != EOF) {
         fputc(c, desfile);
     }
-    char success[50];
-    sprintf_s(success, 50, "备份hosts成功，文件保存在 %s", HOSTS_FILE_BACKUP);
-    MessageBox(hWnd, success, APP_TITLE, MB_OK);
     fclose(sourcefile);
     fclose(desfile);
+    char success[512];
+    sprintf_s(success, 512, "备份hosts成功，文件保存在 %s", HOSTS_FILE_BACKUP);
+    MessageBox(hWnd, success, APP_TITLE, MB_OK);
     return 0;
 }
 
