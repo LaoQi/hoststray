@@ -12,6 +12,7 @@
 
 #define ID_ADD 900
 #define ID_RELOAD 901
+#define ID_OPEN 902
 #define ID_ABOUT 910
 #define ID_EXIT 911
 #define ID_CHECKED 912
@@ -251,6 +252,7 @@ BOOL ShowPopupMenu(HWND hWnd, POINT *curpos) {
  
     // @TODO 增加
     //AppendMenu(hMenu, MF_STRING, ID_ADD, TEXT("增加"));
+    AppendMenu(hMenu, MF_STRING, ID_OPEN, TEXT("打开hosts"));
     AppendMenu(hMenu, MF_STRING, ID_RELOAD, TEXT("重新加载"));
     AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
     for (size_t i = 0; i < hosts_top; i++) {
@@ -311,6 +313,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
             int cmd = (int)wParam;
             switch (cmd) {
+                case ID_OPEN:
+                    ShellExecute(NULL, "notepad", HOSTS_FILE, NULL, NULL, SW_SHOWDEFAULT);
+                    break;
                 case ID_RELOAD:
                     LoadHosts();
                     break;
